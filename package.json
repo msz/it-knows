@@ -1,0 +1,25 @@
+{
+  "name": "it-knows",
+  "version": "1.0.0",
+  "description": "room presence sensing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/msz/it-knows.git"
+  },
+  "keywords": [
+    "raspberrypi",
+    "pir",
+    "motion-sensor",
+    "infrared"
+  ],
+  "author": "Michał Szewczak",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/msz/it-knows/issues"
+  },
+  "homepage": "https://github.com/msz/it-knows#readme"
+}
