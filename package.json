@@ -17,7 +17,7 @@
     "infrared"
   ],
   "author": "Michał Szewczak",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/msz/it-knows/issues"
   },
