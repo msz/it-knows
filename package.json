@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/msz/it-knows/issues"
   },
-  "homepage": "https://github.com/msz/it-knows#readme"
+  "homepage": "https://github.com/msz/it-knows#readme",
+  "devDependencies": {
+    "typescript": "^2.6.2"
+  }
 }
