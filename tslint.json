@@ -3,7 +3,7 @@
         "prettier": true
     },
     "extends": [
-        "tslint:all",
+        "tslint:recommended",
         "tslint-config-prettier"
     ],
     "rulesDirectory": ["tslint-plugin-prettier"]
