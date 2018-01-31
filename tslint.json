@@ -6,7 +6,8 @@
                 "singleQuote": true,
                 "trailingComma": "all"
             }
-        ]
+        ],
+        "object-literal-sort-keys": false
     },
     "extends": [
         "tslint:recommended",

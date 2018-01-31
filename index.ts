@@ -1,14 +1,25 @@
 import { Gpio } from 'onoff';
 import winston from 'winston';
 
-const DOOR_PIN = 17;
-const MOTION_PIN = 23;
-const DOOR_LED_PIN = 27;
-const MOTION_LED_PIN = 22;
-
 function invert(value: 0 | 1) {
   return value ? 0 : 1;
 }
+
+const envPins = {
+  DOOR_PIN: process.env.DOOR_PIN,
+  DOOR_LED_PIN: process.env.DOOR_LED_PIN,
+  MOTION_PIN: process.env.MOTION_PIN,
+  MOTION_LED_PIN: process.env.MOTION_LED_PIN,
+};
+
+const pins = Object.entries(envPins).map(([pinName, pin]) => {
+  if (!pin) {
+    throw new Error(`${pinName} is not defined!`);
+  }
+  return parseInt(pin, 10);
+});
+
+const [DOOR_PIN, DOOR_LED_PIN, MOTION_PIN, MOTION_LED_PIN] = pins;
 
 const gpios = [
   new Gpio(DOOR_PIN, 'in', 'both'),
