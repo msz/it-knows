@@ -1,0 +1,9 @@
+version: "3"
+services:
+  it-knows:
+    build: "."
+    environment:
+      DOOR_PIN: "17"
+      MOTION_PIN: "23"
+      DOOR_LED_PIN: "27"
+      MOTION_LED_PIN: "22"
