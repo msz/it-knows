@@ -1,10 +1,18 @@
 {
     "rules": {
-        "prettier": true
+        "prettier": [
+            true,
+            {
+                "singleQuote": true,
+                "trailingComma": "all"
+            }
+        ]
     },
     "extends": [
         "tslint:recommended",
         "tslint-config-prettier"
     ],
-    "rulesDirectory": ["tslint-plugin-prettier"]
+    "rulesDirectory": [
+        "tslint-plugin-prettier"
+    ]
 }

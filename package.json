@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/msz/it-knows#readme",
   "devDependencies": {
+    "@types/node": "^9.4.0",
+    "onoff": "^1.1.9",
     "prettier": "^1.10.2",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
