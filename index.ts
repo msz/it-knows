@@ -7,8 +7,8 @@ function invert(value: 0 | 1) {
 
 const envPins = {
   DOOR_PIN: process.env.DOOR_PIN || '17',
-  DOOR_LED_PIN: process.env.DOOR_LED_PIN || '23',
-  MOTION_PIN: process.env.MOTION_PIN || '27',
+  DOOR_LED_PIN: process.env.DOOR_LED_PIN || '27',
+  MOTION_PIN: process.env.MOTION_PIN || '23',
   MOTION_LED_PIN: process.env.MOTION_LED_PIN || '22',
 };
 
