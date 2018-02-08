@@ -1,5 +1,5 @@
 import { Gpio } from 'onoff';
-import winston from 'winston';
+import * as winston from 'winston';
 
 function invert(value: 0 | 1) {
   return value ? 0 : 1;
