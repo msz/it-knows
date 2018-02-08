@@ -28,7 +28,7 @@ const gpios = [
   new Gpio(DOOR_PIN, 'in', 'both'),
   new Gpio(MOTION_PIN, 'in', 'both'),
   new Gpio(DOOR_LED_PIN, 'out'),
-  new Gpio(MOTION_PIN, 'out'),
+  new Gpio(MOTION_LED_PIN, 'out'),
 ];
 const [door, motion, doorLed, motionLed] = gpios;
 
@@ -47,7 +47,7 @@ motion.watch((err, value) => {
     return;
   }
   winston.info(value ? 'Motion appeared!' : 'Motion disappeared!');
-  doorLed.writeSync(value);
+  motionLed.writeSync(value);
 });
 
 process.on('SIGINT', () => {
