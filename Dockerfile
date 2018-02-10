@@ -1,7 +1,11 @@
-FROM arm32v7/node:9.4.0
+FROM schmich/armv7hf-alpine-qemu
 
 COPY . .
 
+RUN ["cross-build-start"]
+
 RUN npm install && npm run build
+
+RUN ["cross-build-end"]
 
 CMD ["npm", "start"]
