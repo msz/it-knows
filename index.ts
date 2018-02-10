@@ -1,9 +1,18 @@
 import { Gpio } from 'onoff';
+import { clearTimeout } from 'timers';
 import * as winston from 'winston';
 
-function invert(value: 0 | 1) {
+type Binary = 0 | 1;
+
+function invert(value: Binary) {
   return value ? 0 : 1;
 }
+
+const MOTION_ACTIVE_DURATION_S = parseInt(
+  process.env.MOTION_ACTIVE_DURATION || '60',
+  10,
+);
+const MOTION_ACTIVE_DURATION_MS = MOTION_ACTIVE_DURATION_S * 1000;
 
 const envPins = {
   DOOR_PIN: process.env.DOOR_PIN || '17',
@@ -32,13 +41,38 @@ const gpios = [
 ];
 const [door, motion, doorLed, motionLed] = gpios;
 
+interface IState {
+  door: Binary;
+  motion: Binary;
+  motionTimer: NodeJS.Timer | null;
+}
+
+const state: IState = {
+  door: 0,
+  motion: 0,
+  motionTimer: null,
+};
+
 door.watch((err, value) => {
   if (err) {
     winston.error('Error while reading door pin:', err);
     return;
   }
-  winston.info(value ? 'Door closed!' : 'Door opened!');
-  doorLed.writeSync(invert(value));
+  state.door = invert(value);
+  winston.info(state.door ? 'Door opened!' : 'Door closed!');
+  doorLed.writeSync(state.door);
+
+  if (state.door) {
+    if (state.motionTimer) {
+      clearTimeout(state.motionTimer);
+      state.motionTimer = null;
+    }
+    state.motionTimer = setTimeout(() => {
+      state.motionTimer = null;
+      winston.info('No presence detected, turning light off');
+      // light off
+    }, MOTION_ACTIVE_DURATION_MS);
+  }
 });
 
 motion.watch((err, value) => {
@@ -46,8 +80,15 @@ motion.watch((err, value) => {
     winston.error('Error while reading motion pin:', err);
     return;
   }
-  winston.info(value ? 'Motion appeared!' : 'Motion disappeared!');
+  state.motion = value;
+  winston.info(state.motion ? 'Motion appeared!' : 'Motion disappeared!');
   motionLed.writeSync(value);
+
+  if (state.motion && state.motionTimer) {
+    winston.info('Presence detected, keeping light on');
+    clearTimeout(state.motionTimer);
+    state.motionTimer = null;
+  }
 });
 
 process.on('SIGINT', () => {
