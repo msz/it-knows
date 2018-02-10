@@ -4,7 +4,7 @@ COPY . .
 
 RUN ["cross-build-start"]
 
-RUN npm install && npm run build
+RUN apk update && apk add nodejs && npm install && npm run build
 
 RUN ["cross-build-end"]
 
