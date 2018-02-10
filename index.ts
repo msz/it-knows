@@ -8,20 +8,18 @@ function invert(value: Binary) {
   return value ? 0 : 1;
 }
 
-const MOTION_ACTIVE_DURATION_S = parseInt(
-  process.env.MOTION_ACTIVE_DURATION || '60',
-  10,
-);
-const MOTION_ACTIVE_DURATION_MS = MOTION_ACTIVE_DURATION_S * 1000;
+const TIMER_DURATION_S = parseInt(process.env.TIMER_DURATION || '60', 10);
+const TIMER_DURATION_MS = TIMER_DURATION_S * 1000;
 
-const envPins = {
-  DOOR_PIN: process.env.DOOR_PIN || '17',
-  DOOR_LED_PIN: process.env.DOOR_LED_PIN || '27',
-  MOTION_PIN: process.env.MOTION_PIN || '23',
-  MOTION_LED_PIN: process.env.MOTION_LED_PIN || '22',
-};
+const envPins = [
+  ['DOOR_PIN', process.env.DOOR_PIN || '17'],
+  ['DOOR_LED_PIN', process.env.DOOR_LED_PIN || '27'],
+  ['MOTION_PIN', process.env.MOTION_PIN || '23'],
+  ['MOTION_LED_PIN', process.env.MOTION_LED_PIN || '22'],
+  ['TIMER_LED_PIN', process.env.TIMER_LED_PIN || '18'],
+];
 
-const pins = Object.entries(envPins).map(([pinName, pin]) => {
+const pins = envPins.map(([pinName, pin]) => {
   const parsed = parseInt(pin, 10);
   if (isNaN(parsed)) {
     throw new Error(
@@ -31,15 +29,22 @@ const pins = Object.entries(envPins).map(([pinName, pin]) => {
   return parsed;
 });
 
-const [DOOR_PIN, DOOR_LED_PIN, MOTION_PIN, MOTION_LED_PIN] = pins;
+const [
+  DOOR_PIN,
+  DOOR_LED_PIN,
+  MOTION_PIN,
+  MOTION_LED_PIN,
+  TIMER_LED_PIN,
+] = pins;
 
 const gpios = [
   new Gpio(DOOR_PIN, 'in', 'both'),
   new Gpio(MOTION_PIN, 'in', 'both'),
   new Gpio(DOOR_LED_PIN, 'out'),
   new Gpio(MOTION_LED_PIN, 'out'),
+  new Gpio(TIMER_LED_PIN, 'out'),
 ];
-const [door, motion, doorLed, motionLed] = gpios;
+const [door, motion, doorLed, motionLed, timerLed] = gpios;
 
 interface IState {
   door: Binary;
@@ -67,11 +72,13 @@ door.watch((err, value) => {
       clearTimeout(state.motionTimer);
       state.motionTimer = null;
     }
+    timerLed.writeSync(1);
     state.motionTimer = setTimeout(() => {
       state.motionTimer = null;
+      timerLed.writeSync(0);
       winston.info('No presence detected, turning light off');
       // light off
-    }, MOTION_ACTIVE_DURATION_MS);
+    }, TIMER_DURATION_MS);
   }
 });
 
@@ -88,6 +95,7 @@ motion.watch((err, value) => {
     winston.info('Presence detected, keeping light on');
     clearTimeout(state.motionTimer);
     state.motionTimer = null;
+    timerLed.writeSync(0);
   }
 });
 
