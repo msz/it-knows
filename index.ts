@@ -67,11 +67,12 @@ door.watch((err, value) => {
   winston.info(state.door ? 'Door opened!' : 'Door closed!');
   doorLed.writeSync(state.door);
 
+  if (state.motionTimer) {
+    clearTimeout(state.motionTimer);
+    state.motionTimer = null;
+  }
+
   if (!state.door) {
-    if (state.motionTimer) {
-      clearTimeout(state.motionTimer);
-      state.motionTimer = null;
-    }
     timerLed.writeSync(1);
     state.motionTimer = setTimeout(() => {
       state.motionTimer = null;
