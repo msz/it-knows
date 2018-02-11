@@ -78,6 +78,7 @@ door.watch((err, value) => {
   if (state.motionTimer) {
     clearTimeout(state.motionTimer);
     state.motionTimer = null;
+    timerLed.writeSync(0);
   }
 
   if (!state.door) {
