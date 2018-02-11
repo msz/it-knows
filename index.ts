@@ -11,6 +11,12 @@ function invert(value: Binary) {
 const TIMER_DURATION_S = parseInt(process.env.TIMER_DURATION || '60', 10);
 const TIMER_DURATION_MS = TIMER_DURATION_S * 1000;
 
+const TIMER_ACTIVATION_DELAY_S = parseInt(
+  process.env.TIMER_ACTIVATION_DELAY || '2',
+  10,
+);
+const TIMER_ACTIVATION_DELAY_MS = TIMER_ACTIVATION_DELAY_S * 1000;
+
 const envPins = [
   ['DOOR_PIN', process.env.DOOR_PIN || '17'],
   ['DOOR_LED_PIN', process.env.DOOR_LED_PIN || '27'],
@@ -49,12 +55,14 @@ const [door, motion, doorLed, motionLed, timerLed] = gpios;
 interface IState {
   door: Binary;
   motion: Binary;
+  lastTimerCreation: Date;
   motionTimer: NodeJS.Timer | null;
 }
 
 const state: IState = {
   door: 0,
   motion: 0,
+  lastTimerCreation: new Date(0),
   motionTimer: null,
 };
 
@@ -74,6 +82,7 @@ door.watch((err, value) => {
 
   if (!state.door) {
     timerLed.writeSync(1);
+    state.lastTimerCreation = new Date();
     state.motionTimer = setTimeout(() => {
       state.motionTimer = null;
       timerLed.writeSync(0);
@@ -93,6 +102,13 @@ motion.watch((err, value) => {
   motionLed.writeSync(value);
 
   if (state.motion && state.motionTimer) {
+    if (
+      new Date().getMilliseconds() - state.lastTimerCreation.getMilliseconds() <
+      TIMER_ACTIVATION_DELAY_MS
+    ) {
+      winston.info('Motion probably due to door closing, disregarding');
+      return;
+    }
     winston.info('Presence detected, keeping light on');
     clearTimeout(state.motionTimer);
     state.motionTimer = null;
