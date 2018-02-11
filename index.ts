@@ -8,7 +8,7 @@ function invert(value: Binary) {
   return value ? 0 : 1;
 }
 
-const TIMER_DURATION_S = parseInt(process.env.TIMER_DURATION || '60', 10);
+const TIMER_DURATION_S = parseInt(process.env.TIMER_DURATION || '300', 10);
 const TIMER_DURATION_MS = TIMER_DURATION_S * 1000;
 
 const TIMER_ACTIVATION_DELAY_S = parseInt(
