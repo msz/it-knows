@@ -103,7 +103,7 @@ motion.watch((err, value) => {
 
   if (state.motion && state.motionTimer) {
     if (
-      new Date().getMilliseconds() - state.lastTimerCreation.getMilliseconds() <
+      new Date().getTime() - state.lastTimerCreation.getTime() <
       TIMER_ACTIVATION_DELAY_MS
     ) {
       winston.info('Motion probably due to door closing, disregarding');
