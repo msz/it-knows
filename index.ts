@@ -1,11 +1,19 @@
 import { Gpio } from 'onoff';
 import { clearTimeout } from 'timers';
+import TuyaDevice from 'tuyapi';
 import * as winston from 'winston';
 
 type Binary = 0 | 1;
 
 function invert(value: Binary) {
   return value ? 0 : 1;
+}
+
+const TUYA_ID = process.env.TUYA_ID;
+const TUYA_KEY = process.env.TUYA_KEY;
+
+if (!TUYA_ID || !TUYA_KEY) {
+  throw new Error('You need to provide Tuya auth info!');
 }
 
 const TIMER_DURATION_S = parseInt(process.env.TIMER_DURATION || '300', 10);
@@ -43,15 +51,6 @@ const [
   TIMER_LED_PIN,
 ] = pins;
 
-const gpios = [
-  new Gpio(DOOR_PIN, 'in', 'both'),
-  new Gpio(MOTION_PIN, 'in', 'both'),
-  new Gpio(DOOR_LED_PIN, 'out'),
-  new Gpio(MOTION_LED_PIN, 'out'),
-  new Gpio(TIMER_LED_PIN, 'out'),
-];
-const [door, motion, doorLed, motionLed, timerLed] = gpios;
-
 interface IState {
   door: Binary;
   motion: Binary;
@@ -66,59 +65,84 @@ const state: IState = {
   motionTimer: null,
 };
 
-door.watch((err, value) => {
-  if (err) {
-    winston.error('Error while reading door pin:', err);
-    return;
-  }
-  state.door = invert(value);
-  winston.info(state.door ? 'Door opened!' : 'Door closed!');
-  doorLed.writeSync(state.door);
+async function main() {
+  const gpios = [
+    new Gpio(DOOR_PIN, 'in', 'both'),
+    new Gpio(MOTION_PIN, 'in', 'both'),
+    new Gpio(DOOR_LED_PIN, 'out'),
+    new Gpio(MOTION_LED_PIN, 'out'),
+    new Gpio(TIMER_LED_PIN, 'out'),
+  ];
+  const [door, motion, doorLed, motionLed, timerLed] = gpios;
 
-  if (state.motionTimer) {
-    clearTimeout(state.motionTimer);
-    state.motionTimer = null;
-    timerLed.writeSync(0);
-  }
+  const tuya = new TuyaDevice({
+    id: TUYA_ID,
+    key: TUYA_KEY,
+  });
 
-  if (!state.door) {
-    timerLed.writeSync(1);
-    state.lastTimerCreation = new Date();
-    state.motionTimer = setTimeout(() => {
-      state.motionTimer = null;
-      timerLed.writeSync(0);
-      winston.info('No presence detected, turning light off');
-      // light off
-    }, TIMER_DURATION_MS);
-  }
-});
+  winston.info('Connecting to Tuya…');
+  await tuya.resolveIds();
+  winston.info('Tuya IDs resolved!');
 
-motion.watch((err, value) => {
-  if (err) {
-    winston.error('Error while reading motion pin:', err);
-    return;
-  }
-  state.motion = value;
-  winston.info(state.motion ? 'Motion appeared!' : 'Motion disappeared!');
-  motionLed.writeSync(value);
-
-  if (state.motion && state.motionTimer) {
-    if (
-      new Date().getTime() - state.lastTimerCreation.getTime() <
-      TIMER_ACTIVATION_DELAY_MS
-    ) {
-      winston.info('Motion probably due to door closing, disregarding');
+  door.watch((err, value) => {
+    if (err) {
+      winston.error('Error while reading door pin:', err);
       return;
     }
-    winston.info('Presence detected, keeping light on');
-    clearTimeout(state.motionTimer);
-    state.motionTimer = null;
-    timerLed.writeSync(0);
-  }
-});
+    state.door = invert(value);
+    winston.info(state.door ? 'Door opened!' : 'Door closed!');
+    doorLed.writeSync(state.door);
 
-process.on('SIGINT', () => {
-  for (const gpio of gpios) {
-    gpio.unexport();
-  }
-});
+    if (state.motionTimer) {
+      clearTimeout(state.motionTimer);
+      state.motionTimer = null;
+      timerLed.writeSync(0);
+    }
+
+    if (!state.door) {
+      timerLed.writeSync(1);
+      state.lastTimerCreation = new Date();
+      state.motionTimer = setTimeout(() => {
+        state.motionTimer = null;
+        timerLed.writeSync(0);
+        winston.info('No presence detected, turning light off');
+        tuya.set({ set: false });
+      }, TIMER_DURATION_MS);
+    } else {
+      winston.info('Door opened, turning light on');
+      tuya.set({ set: true });
+    }
+  });
+
+  motion.watch((err, value) => {
+    if (err) {
+      winston.error('Error while reading motion pin:', err);
+      return;
+    }
+    state.motion = value;
+    winston.info(state.motion ? 'Motion appeared!' : 'Motion disappeared!');
+    motionLed.writeSync(value);
+
+    if (state.motion && state.motionTimer) {
+      if (
+        new Date().getTime() - state.lastTimerCreation.getTime() <
+        TIMER_ACTIVATION_DELAY_MS
+      ) {
+        winston.info('Motion probably due to door closing, disregarding');
+        return;
+      }
+      winston.info('Presence detected, keeping light on');
+      clearTimeout(state.motionTimer);
+      state.motionTimer = null;
+      timerLed.writeSync(0);
+    }
+  });
+
+  process.on('SIGINT', () => {
+    for (const gpio of gpios) {
+      gpio.unexport();
+    }
+  });
+}
+
+main();
