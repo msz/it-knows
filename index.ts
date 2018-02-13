@@ -1,6 +1,6 @@
 import { Gpio } from 'onoff';
 import { clearTimeout } from 'timers';
-import TuyaDevice from 'tuyapi';
+import * as TuyaDevice from 'tuyapi';
 import * as winston from 'winston';
 
 type Binary = 0 | 1;
