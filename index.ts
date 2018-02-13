@@ -138,11 +138,14 @@ async function main() {
     }
   });
 
-  process.on('SIGINT', () => {
+  function unexport() {
     for (const gpio of gpios) {
       gpio.unexport();
     }
-  });
+  }
+
+  process.on('SIGINT', unexport);
+  process.on('SIGTERM', unexport);
 }
 
 main();
