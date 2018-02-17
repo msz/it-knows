@@ -94,7 +94,7 @@ async function main() {
   await tuya.resolveIds();
   winston.info('Tuya IDs resolved!');
 
-  door.watch((err, value) => {
+  door.watch(async (err, value) => {
     if (err) {
       winston.error('Error while reading door pin:', err);
       return;
@@ -112,20 +112,28 @@ async function main() {
     if (!state.door) {
       timerLed.writeSync(1);
       state.lastTimerCreation = new Date();
-      state.motionTimer = setTimeout(() => {
+      state.motionTimer = setTimeout(async () => {
         state.motionTimer = null;
         timerLed.writeSync(0);
         winston.info('No presence detected');
         if (isAfterSunset()) {
           winston.info('Is after sunset so light likely on, turning light off');
-          tuya.set({ set: false });
+          try {
+            await tuya.set({ set: false });
+          } catch (e) {
+            winston.error('Connection error to Tuya occured');
+          }
         }
       }, TIMER_DURATION_MS);
     } else {
       winston.info('Door opened');
       if (isAfterSunset()) {
         winston.info('Is after sunset, turning light on');
-        tuya.set({ set: true });
+        try {
+          await tuya.set({ set: true });
+        } catch (e) {
+          winston.error('Connection error to Tuya occured');
+        }
       }
     }
   });
