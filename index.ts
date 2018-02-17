@@ -126,7 +126,6 @@ async function main() {
         }
       }, TIMER_DURATION_MS);
     } else {
-      winston.info('Door opened');
       if (isAfterSunset()) {
         winston.info('Is after sunset, turning light on');
         try {
