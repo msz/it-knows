@@ -1,4 +1,5 @@
 import { Gpio } from 'onoff';
+import * as SunCalc from 'suncalc';
 import { clearTimeout } from 'timers';
 import * as TuyaDevice from 'tuyapi';
 import * as winston from 'winston';
@@ -8,6 +9,9 @@ type Binary = 0 | 1;
 function invert(value: Binary) {
   return value ? 0 : 1;
 }
+
+const LATITUDE = 51.5; // London latitude
+const LONGITUDE = -0.1; // London longitude
 
 const TUYA_ID = process.env.TUYA_ID;
 const TUYA_KEY = process.env.TUYA_KEY;
@@ -65,6 +69,12 @@ const state: IState = {
   motionTimer: null,
 };
 
+function isAfterSunset() {
+  const now = new Date();
+  const times = SunCalc.getTimes(now, LATITUDE, LONGITUDE);
+  return now >= times.sunsetStart || now <= times.sunriseEnd;
+}
+
 async function main() {
   const gpios = [
     new Gpio(DOOR_PIN, 'in', 'both'),
@@ -105,12 +115,18 @@ async function main() {
       state.motionTimer = setTimeout(() => {
         state.motionTimer = null;
         timerLed.writeSync(0);
-        winston.info('No presence detected, turning light off');
-        tuya.set({ set: false });
+        winston.info('No presence detected');
+        if (isAfterSunset()) {
+          winston.info('Is after sunset so light likely on, turning light off');
+          tuya.set({ set: false });
+        }
       }, TIMER_DURATION_MS);
     } else {
-      winston.info('Door opened, turning light on');
-      tuya.set({ set: true });
+      winston.info('Door opened');
+      if (isAfterSunset()) {
+        winston.info('Is after sunset, turning light on');
+        tuya.set({ set: true });
+      }
     }
   });
 

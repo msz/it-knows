@@ -29,6 +29,7 @@
     "@types/winston": "^2.3.7",
     "onoff": "^1.1.9",
     "prettier": "^1.10.2",
+    "suncalc": "^1.8.0",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-plugin-prettier": "^1.3.0",
