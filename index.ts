@@ -15,6 +15,7 @@ const LONGITUDE = -0.1; // London longitude
 
 const TUYA_ID = process.env.TUYA_ID;
 const TUYA_KEY = process.env.TUYA_KEY;
+const IP = process.env.IP;
 
 if (!TUYA_ID || !TUYA_KEY) {
   throw new Error('You need to provide Tuya auth info!');
@@ -88,11 +89,8 @@ async function main() {
   const tuya = new TuyaDevice({
     id: TUYA_ID,
     key: TUYA_KEY,
+    ip: IP,
   });
-
-  winston.info('Connecting to Tuya…');
-  await tuya.resolveIds();
-  winston.info('Tuya IDs resolved!');
 
   door.watch(async (err, value) => {
     if (err) {
