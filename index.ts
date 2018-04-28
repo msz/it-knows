@@ -76,6 +76,30 @@ function isAfterSunset() {
   return now >= times.sunsetStart || now <= times.sunriseEnd;
 }
 
+async function retry<T>(
+  actionName: string,
+  action: () => Promise<T>,
+  times: number,
+) {
+  let retried;
+  for (retried = 0; retried < times; retried++) {
+    if (retried > 0) {
+      winston.warn(
+        `Action "${actionName}" failed! Retrying ${retried}th time...`,
+      );
+    }
+    try {
+      await action();
+      winston.info(`Action "${actionName}" succeeded!`);
+      return retried;
+    } catch {
+      // just advance
+    }
+  }
+  winston.error(`Action "${actionName}" failed`);
+  return null;
+}
+
 async function main() {
   const gpios = [
     new Gpio(DOOR_PIN, 'in', 'both'),
@@ -116,18 +140,14 @@ async function main() {
         winston.info('No presence detected');
         if (isAfterSunset()) {
           winston.info('Is after sunset so light likely on, turning light off');
-          try {
-            await tuya.set({ set: false });
-          } catch (e) {
-            winston.error('Connection error to Tuya occured');
-          }
+          await retry('Set false on Tuya', () => tuya.set({ set: false }), 3);
         }
       }, TIMER_DURATION_MS);
     } else {
       if (isAfterSunset()) {
         winston.info('Is after sunset, turning light on');
         try {
-          await tuya.set({ set: true });
+          await retry('Set true on Tuya', () => tuya.set({ set: true }), 3);
         } catch (e) {
           winston.error('Connection error to Tuya occured');
         }
